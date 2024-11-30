@@ -11,10 +11,13 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.globals import set_verbose, set_debug
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn import run as uvicorn
 
 # Thread-safe session management
 from collections import defaultdict
 import threading
+
+port = int(os.environ.get("PORT", 8000))
 
 set_verbose(True)
 set_debug(True)
@@ -261,6 +264,7 @@ def main():
     print(tweet)
 
 if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=port)
     llm = ChatMistralAI()
     llm.invoke("invoked dinesh-twitter-project")
     main()
