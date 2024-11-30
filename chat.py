@@ -1,27 +1,19 @@
 import os
 import torch
-import asyncio
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict
 from pinecone import Pinecone
 from transformers import AutoTokenizer, AutoModel
 from langchain_mistralai import ChatMistralAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.globals import set_verbose, set_debug
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn import run as uvicorn
+import threading
+from collections import defaultdict
 
 # Thread-safe session management
-from collections import defaultdict
-import threading
-
-port = int(os.environ.get("PORT", 8000))
-
-set_verbose(True)
-set_debug(True)
-
 class SessionManager:
     """
     Thread-safe session management for conversation history
@@ -69,7 +61,10 @@ class DineshTweetGenerator:
         
         # Embedding Model Setup
         self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
-        self.model = AutoModel.from_pretrained(embedding_model)
+        
+        # Load model on CPU
+        self.device = torch.device("cpu")  # Ensure we use CPU
+        self.model = AutoModel.from_pretrained(embedding_model).to(self.device)
         
         # Mistral LLM with LangChain
         self.mistral_llm = ChatMistralAI(
@@ -115,6 +110,7 @@ Response:"""
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for input text"""
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}  # Ensure input tensor is on CPU
         with torch.no_grad():
             outputs = self.model(**inputs)
             embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
@@ -264,7 +260,5 @@ def main():
     print(tweet)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=port)
-    llm = ChatMistralAI()
-    llm.invoke("invoked dinesh-twitter-project")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
     main()
