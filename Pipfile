@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+langchain-community = "*"
+openai = "*"
+pinecone = "*"
+python-dotenv = "*"
+fastapi = "*"
+uvicorn = "*"
+pinecone-client = "*"
+transformers = "*"
+torch = "*"
+black = "*"
+langchain-mistralai = "*"
+langchain = "*"
+langchain-openai = "*"
+langsmith = "*"
+websockets = "*"
+sentence-transformers = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
